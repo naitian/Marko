@@ -10,10 +10,8 @@ class UserBotClient(fbchat.Client):
     def __init__(self, thread_id, name="Bot", thread=None, reverse=False):
         try:
             cookies = json.loads(open('./cookies.json', 'r').read())
-            print(cookies)
         except:
             cookies = None
-            print(cookies)
         super().__init__(secret.MY_USERNAME, secret.MY_PASSWORD, session_cookies=cookies)
 
         if not (thread_id or thread):
@@ -24,7 +22,13 @@ class UserBotClient(fbchat.Client):
         self.messages = self.thread['messages']
         self.name = name if name else self.thread['name']
         self.reverse = reverse
-        self.mm = self.generate_markov(self.messages)
+        try:
+            self.mm = self.load_model()
+        except:
+            self.mm = self.generate_markov(self.messages)
+            print("Caching model")
+            self.save_model()
+            print("Cached model")
 
     def onMessage(self, author_id, message, thread_id, thread_type, **kwargs):
         self.markAsDelivered(author_id, thread_id)
@@ -75,12 +79,12 @@ class UserBotClient(fbchat.Client):
 
     def load_model(self, filename=None):
         if filename is None:
-            filename = '{}.json'.format(self.thread_id)
+            filename = '{}.model.json'.format(self.thread_id)
         self.mm = markovify.NewlineText.from_json(open(filename, 'r').read())
 
     def save_model(self, filename=None):
         if filename is None:
-            filename = '{}.json'.format(self.thread_id)
+            filename = '{}.model.json'.format(self.thread_id)
         open(filename, 'w').write(self.mm.to_json())
 
     def save_cookies(self, filename='./cookies.json'):

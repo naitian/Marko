@@ -1,4 +1,6 @@
 secret.py
+*.model.json
+cookies.json
 
 # Python
 __pycache__/
